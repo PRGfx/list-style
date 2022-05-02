@@ -3,10 +3,15 @@ import { $add, $get } from 'plow-js';
 import ListButtonComponent from "./list-button-component";
 import React from 'react';
 import ListStyleEditing from "./liststyle/liststyleediting";
-import { setListStyles } from "./config/config";
+import {getEnabledListStyles, getListStyles, setListStyles} from "./config/config";
 
-const addPlugin = (Plugin, isEnabled) => (ckEditorConfiguration, options) => {
-	if (!isEnabled || isEnabled(options.editorOptions, options)) {
+const addPlugin = (Plugin, getConfiguration) => (ckEditorConfiguration, options) => {
+	const editorConfiguration = getConfiguration(options.editorOptions);
+	console.log(editorConfiguration);
+	const isEnabled = editorConfiguration === true
+		|| Object.keys(getEnabledListStyles($get('ol', editorConfiguration), getListStyles('ol'))).length > 0
+		|| Object.keys(getEnabledListStyles($get('ul', editorConfiguration), getListStyles('ul'))).length > 0;
+	if (isEnabled) {
 		ckEditorConfiguration.plugins = ckEditorConfiguration.plugins || [];
 		return $add('plugins', Plugin, ckEditorConfiguration);
 	}
@@ -18,7 +23,7 @@ manifest('Lala.ListStyle:ListStyleButton', {}, (globalRegistry, { frontendConfig
 	const config = ckEditorRegistry.get('config');
 	const richtextToolbar = ckEditorRegistry.get('richtextToolbar');
 	setListStyles(frontendConfiguration['Lala.ListStyle:Styles']);
-	config.set('listStyle', addPlugin(ListStyleEditing, $get('formatting.listStyle')));
+	config.set('listStyle', addPlugin(ListStyleEditing, $get('listStyle')));
 
 	// ordered list
 	richtextToolbar.set('orderedList', {

@@ -27,6 +27,32 @@ export function getListTypeFromListStyleType( style ) {
 	return null;
 }
 
+/**
+ * @param {boolean|null|string[]|Record<string, boolean|null>} configuration
+ * @param {ReturnType<getListStyles>} availableListStyles
+ * @return {*[]|*}
+ */
+export function getEnabledListStyles(configuration, availableListStyles) {
+	let keys = [];
+	if (configuration === false || configuration === null) {
+		return keys;
+	} else if (configuration === true) {
+		return availableListStyles;
+	} else if (Array.isArray(configuration)) {
+		keys = configuration;
+	} else if (typeof configuration === 'object') {
+		keys = Object.keys(configuration).filter(key => Boolean(configuration[key]));
+	}
+
+	return keys
+		.reduce((c, key) => {
+			if (availableListStyles[key]) {
+				c[key] = availableListStyles[key];
+			}
+			return c;
+		}, {});
+}
+
 export function setListStyles(config) {
 	const ul = config.hasOwnProperty('ul') ? config.ul : {};
 	const ol = config.hasOwnProperty('ol') ? config.ol : {};

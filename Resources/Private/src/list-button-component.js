@@ -9,7 +9,7 @@ import { executeCommand } from '@neos-project/neos-ui-ckeditor5-bindings';
 import { selectors } from '@neos-project/neos-ui-redux-store';
 import { neos } from '@neos-project/neos-ui-decorators';
 import { ButtonGroup, Button, IconButton } from '@neos-project/react-ui-components';
-import { getListStyles } from "./config/config";
+import {getEnabledListStyles, getListStyles} from "./config/config";
 
 @neos(globalRegistry => ({
 	i18nRegistry: globalRegistry.get('i18n')
@@ -59,7 +59,7 @@ export default class ListButtonComponent extends PureComponent {
 	}
 
 	render() {
-		const listStyles = getListStyles(this.props.listType === 'bulletedList' ? 'ul' : 'ol');
+		const listStyles = this.getEnabledListStyles();
 		return (
 			<div className={style.button}>
 				<IconButtonComponent
@@ -109,8 +109,25 @@ export default class ListButtonComponent extends PureComponent {
 		return $get('listStyle', this.props.formattingUnderCursor) || '';
 	}
 
+	getEnabledListStyles() {
+		const listStyleConfiguration = $get('listStyle', this.props.inlineEditorOptions);
+
+		const listType = this.props.listType === 'bulletedList' ? 'ul' : 'ol'
+		const availableStyles = getListStyles(listType);
+
+		if (typeof listStyleConfiguration !== 'object') {
+			return getEnabledListStyles(listStyleConfiguration, availableStyles);
+		}
+
+		if (listType in listStyleConfiguration) {
+			return getEnabledListStyles(listStyleConfiguration[listType], availableStyles);
+		}
+
+		return [];
+	}
+
 	shouldDisplayAdditionalButtons() {
-		return this.getFormattingUnderCursor() !== '' && $get('formatting.listStyle', this.props.inlineEditorOptions);
+		return this.getFormattingUnderCursor() !== '' && Object.keys(this.getEnabledListStyles()).length > 0;
 	}
 
 	isOpen() {
